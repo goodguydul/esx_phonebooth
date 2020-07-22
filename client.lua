@@ -102,7 +102,7 @@ Citizen.CreateThread(function()
   while true do
     local ped = PlayerPedId()
 
-    if not isCalling and ((isNearPB and GetEntityHealth(isNearPB) < 999)) then
+    if not isCalling and ((isNearPB and GetEntityHealth(isNearPB) > 999)) then
       local pbCoords = GetEntityCoords(isNearPB)
 
       if IsPedInAnyVehicle(ped) and GetPedInVehicleSeat(GetVehiclePedIsIn(ped), -1) == ped then
