@@ -11,3 +11,7 @@ Additional script for gcphone that enable props phonebooth to be usable
 #### (click to play video)
 
   [![Preview](https://i.imgur.com/1gbw5T4.png)](https://drive.google.com/file/d/1C92HzEu-szj2hyfkeiP_qSc5LnNtfwU9/preview)
+
+Credits :
+  - [GCPhone : Jonathan D @ Gannon](https://github.com/N3MTV/gcphone)
+  - [this shitty script : goodguydul](https://github.com/goodguydul/phonebooth/)
