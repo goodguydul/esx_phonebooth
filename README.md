@@ -3,5 +3,5 @@ Additional script for gcphone that enable props phonebooth to be usable
 
 ### How to install :
 
-  - Put the code below your gcphone script.
+  - Put the code on client.lua and server.lua to your gcphone script.
   - Run.
