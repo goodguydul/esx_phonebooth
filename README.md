@@ -10,4 +10,3 @@ Additional script for gcphone that enable props phonebooth to be usable
 ### Preview :
 
   [![Preview](https://i.imgur.com/1gbw5T4.png)](https://drive.google.com/file/d/1C92HzEu-szj2hyfkeiP_qSc5LnNtfwU9/preview)
-  [![Watch the video](https://i.imgur.com/vKb2F1B.png)](https://youtu.be/vt5fpE0bzSY)
