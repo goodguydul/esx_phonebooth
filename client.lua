@@ -91,9 +91,7 @@ Citizen.CreateThread(function()
                   if hasPhone == false then
                     openPhoneBoothMenu()
                   else
-                    print('ada hape')
                     ESX.ShowNotification("You already have a ~r~Handphone~s~, Use your fuckin phone")
-                    print(GetEntityHealth(isNearPB))
                   end
                 end)
             else
@@ -267,8 +265,6 @@ AddEventHandler('startCountPulse', function(pbObj)
     local extraCost = 1
     currentCost = currentCost + extraCost
   end
-
-  print(pbObj)
 
   if pbObj then
     TriggerServerEvent('payPulse', currentCost)
