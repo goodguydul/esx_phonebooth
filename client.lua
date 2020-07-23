@@ -1,7 +1,10 @@
+-- Put this declaration on top of gcphone script
+
 local currentCost = 0.0
 local currentCash = 1000
 local isNearPB = false
 local isCalling = false
+
 
 local phones = {
   [1158960338] = true,
@@ -22,12 +25,12 @@ local DisableKeys = {0, 22, 23, 24, 29, 30, 31, 37, 44, 56, 82, 140, 166, 167, 1
 
 
 
--- ======================================================= PHONE BOOTH / WARTEL SCRIPT -by: zulvio ======================================================================
--- 3D text
-function DrawText3Ds(x,y,z, text)
-    local onScreen,_x,_y=World3dToScreen2d(x,y,z)
-    local px,py,pz=table.unpack(GetGameplayCamCoords())
-    
+-- ============= Phone Booth Script
+
+function DrawText3Ds(x, y, z, text)
+    local onScreen, _x, _y = World3dToScreen2d(x, y, z)
+    local px, py, pz = table.unpack(GetGameplayCamCoords())
+
     SetTextScale(0.4, 0.4)
     SetTextFont(4)
     SetTextProportional(1)
@@ -35,123 +38,125 @@ function DrawText3Ds(x,y,z, text)
     SetTextEntry("STRING")
     SetTextCentre(1)
     AddTextComponentString(text)
-    DrawText(_x,_y)
+    DrawText(_x, _y)
     local factor = (string.len(text)) / 370
-    DrawRect(_x,_y+0.0125, 0.015+ factor, 0.03, 41, 11, 41, 68)
+    DrawRect(_x, _y + 0.0125, 0.015 + factor, 0.03, 41, 11, 41, 68)
 end
 
 -- cari phonebooth terdekat
 function FindNearestPB()
-  local coords = GetEntityCoords(PlayerPedId())
-  local pBooth = {}
-  local handle, object = FindFirstObject()
-  local success
+    local coords = GetEntityCoords(PlayerPedId())
+    local pBooth = {}
+    local handle, object = FindFirstObject()
+    local success
 
-  repeat
-    if phones[GetEntityModel(object)] then
-      table.insert(pBooth, object)
+    repeat
+        if phones[GetEntityModel(object)] then
+            table.insert(pBooth, object)
+        end
+
+        success, object = FindNextObject(handle, object)
+    until not success
+
+    EndFindObject(handle)
+
+    local pbObj = 0
+    local pbDistance = 1000
+
+    for _, x in pairs(pBooth) do
+        local dstcheck = GetDistanceBetweenCoords(coords, GetEntityCoords(x))
+
+        if dstcheck < pbDistance then
+            pbDistance = dstcheck
+            pbObj = x
+        end
     end
 
-    success, object = FindNextObject(handle, object)
-  until not success
-
-  EndFindObject(handle)
-
-  local pbObj = 0
-  local pbDistance = 1000
-
-  for _,x in pairs(pBooth) do
-    local dstcheck = GetDistanceBetweenCoords(coords, GetEntityCoords(x))
-
-    if dstcheck < pbDistance then
-      pbDistance = dstcheck
-      pbObj = x
-    end
-  end
-
-  return pbObj, pbDistance
+    return pbObj, pbDistance
 end
 
 -- pre thread
-Citizen.CreateThread(function()
-  while true do
-    Citizen.Wait(250)
+Citizen.CreateThread(
+    function()
+        while true do
+            Citizen.Wait(250)
 
-    local pbObj, pbDistance = FindNearestPB()
+            local pbObj, pbDistance = FindNearestPB()
 
-    if pbDistance < 1.0 then
-      isNearPB = pbObj
-      local playerData = ESX.GetPlayerData()
-      for i=1, #playerData.accounts, 1 do
-        if playerData.accounts[i].name == 'money' then
-          currentCash = playerData.accounts[i].money
-          break
+            if pbDistance < 1.0 then
+                isNearPB = pbObj
+                local playerData = ESX.GetPlayerData()
+                for i = 1, #playerData.accounts, 1 do
+                    if playerData.accounts[i].name == "money" then
+                        currentCash = playerData.accounts[i].money
+                        break
+                    end
+                end
+            else
+                isNearPB = false
+
+                Citizen.Wait(math.ceil(pbDistance * 20))
+            end
         end
-      end
-    else
-      isNearPB = false
-      ESX.UI.Menu.CloseAll()
-      Citizen.Wait(math.ceil(pbDistance * 20))
     end
-
-  end
-end)
+)
 
 -- main thread
-Citizen.CreateThread(function()
-  while true do
-    local ped = PlayerPedId()
+Citizen.CreateThread(
+    function()
+        while true do
+            local ped = PlayerPedId()
 
-    if not isCalling and ((isNearPB and GetEntityHealth(isNearPB) > 999)) then
-      local pbCoords = GetEntityCoords(isNearPB)
+            if not isCalling and (isNearPB and GetEntityHealth(isNearPB) > 999) then
 
-      if IsPedInAnyVehicle(ped) and GetPedInVehicleSeat(GetVehiclePedIsIn(ped), -1) == ped then
-        DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.2, "Exit Vehicle To Use Phone Booth")
-      else
-        DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.5,"Press ~g~ E ~w~ To Use Phone Booth")
+                local pbCoords = GetEntityCoords(isNearPB)
 
-        if IsControlJustReleased(0, 38) then
-            if currentCash > 0 then
+                if IsPedInAnyVehicle(ped) and GetPedInVehicleSeat(GetVehiclePedIsIn(ped), -1) == ped then
+                    DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.2, "Exit Vehicle To Use Phone Booth")
+                else
+                    DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.5, "Press ~g~ E ~w~ To Use Phone Booth")
 
-                hasPhone(function (hasPhone)
-                  if hasPhone == false then
-                    openPhoneBoothMenu()
-
-                  else
-                    print('ada hape')
-                    ESX.ShowNotification("You have a ~r~Handphone~s~, Use your fuckin phone")
-                    print(GetEntityHealth(isNearPB))
-
-                  end
-                end)
+                    if IsControlJustReleased(0, 38) then
+                        if currentCash > 0 then
+                            hasPhone(
+                                function(hasPhone)
+                                    if hasPhone == false then
+                                        openPhoneBoothMenu(isNearPB)
+                                    else
+                                        ESX.ShowNotification("You're Already have a ~r~Handphone~s~, Use your Phone")
+                                    end
+                                end
+                            )
+                        else
+                            ESX.ShowNotification("Not Enough Money To Send Message!")
+                        end
+                    -- end
+                    end
+                end
             else
-              ESX.ShowNotification("Not Enough Money")            
+                Citizen.Wait(250)
             end
-          -- end
+            Citizen.Wait(0)
         end
-      end
-    else
-      Citizen.Wait(250)
     end
-    Citizen.Wait(0)
-  end
-end)
+)
 
 
-function openPhoneBoothMenu()
+function openPhoneBoothMenu(isNearPB)
+
     ESX.UI.Menu.Open(
         "default",
         GetCurrentResourceName(),
         "phone_booth_menu",
         {
-            title = "Select to Call (SMS: $100 | Call: $1/second",
+            title = "Select to Call (SMS: $100 | Call: $1/second)",
             align = "top-left",
             elements = {
-                {label = "Police", value = "911"},
-                {label = "Ambulance", value = "311"},
-                {label = "Mechanic", value = "mechanic"},
+                {label = "Police", value = "police"},
+                {label = "Ambulance", value = "ambulance"},
+                {label = "Mechanic", value = "mecano"},
                 {label = "Call Number", value = "othercall"},
-                {label = "Send SMS Number", value = "othersms"},
+                {label = "Send Message Number", value = "othersms"}
             }
         },
         function(data, menu)
@@ -159,46 +164,41 @@ function openPhoneBoothMenu()
             local playerPed = PlayerPedId()
             local coords = GetEntityCoords(playerPed)
             local caller = GetPlayerName(source)
-
-            if option == "911" then
+            if option == "police" then
                 menu.close()
 
                 TriggerEvent("gcphone:autoCall", option, {useNumber = "Phone Booth"})
                 isCalling = true
-                TriggerEvent('countPulse',isNearPB,playerPed)
+                TriggerEvent("countPulse", isNearPB, playerPed)
                 PhonePlayCall(true)
-
-            elseif option == "311" then
-
+            elseif option == "ambulance" then
                 menu.close()
 
                 TriggerEvent("gcphone:autoCall", option, {useNumber = "Phone Booth"})
                 isCalling = true
-                TriggerEvent('countPulse',isNearPB,playerPed)
+                TriggerEvent("countPulse", isNearPB, playerPed)
                 PhonePlayCall(true)
-
-            elseif option == "mechanic" then
-
+            elseif option == "mecano" then
                 menu.close()
                 if currentCash > 100 then
-                  DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
-                  while (UpdateOnscreenKeyboard() == 0) do
-                      DisableAllControlActions(0)
-                      Wait(0)
-                  end
-                  if (GetOnscreenKeyboardResult()) then
-                      message = GetOnscreenKeyboardResult()
-                      message =
-                          "[MESSAGE FROM PHONEBOOTH] : " .. message .. " - Location : " .. coords.x .. ", " .. coords.y
-                      sendMessage(option, message)
-                      ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
-                      TriggerServerEvent('payPulse', 100)
-                  end
+                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
+                    while (UpdateOnscreenKeyboard() == 0) do
+                        DisableAllControlActions(0)
+                        Wait(0)
+                    end
+                    if (GetOnscreenKeyboardResult()) then
+                        message = GetOnscreenKeyboardResult()
+                        message =
+                            "[MESSAGE FROM PHONEBOOTH] : " ..
+                            message .. " - Location : " .. coords.x .. ", " .. coords.y
+                        sendMessage(option, message)
+                        ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
+                        TriggerServerEvent("payPulse", 100)
+                    end
                 else
-                  ESX.ShowNotification("Not Enough Money to send message!")   
-                end               
+                    ESX.ShowNotification("Not Enough Money to send message!")
+                end
             elseif option == "othercall" then
-
                 local number = ""
                 menu.close()
 
@@ -214,101 +214,114 @@ function openPhoneBoothMenu()
                 if number ~= "" then
                     TriggerEvent("gcphone:autoCall", number, {useNumber = "Phone Booth : " .. caller})
                     isCalling = true
-                    TriggerEvent('countPulse',isNearPB,playerPed)
+                    TriggerEvent("countPulse", isNearPB, playerPed)
                     PhonePlayCall(true)
                 end
-
             elseif option == "othersms" then
-
                 local number = ""
                 menu.close()
-                if currentCash > 100 then
-                  DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 10)
-                  while (UpdateOnscreenKeyboard() == 0) do
-                      DisableAllControlActions(0)
-                      Wait(0)
-                  end
-                  if (GetOnscreenKeyboardResult()) then
-                      number = GetOnscreenKeyboardResult()
-                  end
 
-                  if number ~= "" then
-                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
+                if currentCash > 100 then
+                    DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 10)
                     while (UpdateOnscreenKeyboard() == 0) do
                         DisableAllControlActions(0)
                         Wait(0)
                     end
                     if (GetOnscreenKeyboardResult()) then
-                        message = GetOnscreenKeyboardResult()
-                        message =
-                            "[MESSAGE FROM PHONEBOOTH] : " .. message .. " - Location : " .. coords.x .. ", " .. coords.y
-                        sendMessage(number, message)
-                        ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
-                        TriggerServerEvent('payPulse', 100)
+                        number = GetOnscreenKeyboardResult()
                     end
-                  end
+
+                    if number ~= "" then
+                        DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
+                        while (UpdateOnscreenKeyboard() == 0) do
+                            DisableAllControlActions(0)
+                            Wait(0)
+                        end
+                        if (GetOnscreenKeyboardResult()) then
+                            message = GetOnscreenKeyboardResult()
+                            message =
+                                "[MESSAGE FROM PHONEBOOTH] : " ..
+                                message .. " - Location : " .. coords.x .. ", " .. coords.y
+                            sendMessage(number, message)
+                            ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
+                            TriggerServerEvent("payPulse", 100)
+                        end
+                    end
                 else
-                  ESX.ShowNotification("Not Enough Money to send message!")
+                    ESX.ShowNotification("Not Enough Money to send message!")
                 end
             end
-        end)
+        end,
+        function(data, menu)
+            menu.close()  
+        end   
+    )
 end
 
 -- main itung pulsa
-AddEventHandler('countPulse', function(pbObj, ped)
-  Citizen.Wait(100)
-  TriggerEvent('startCountPulse', pbObj)
+AddEventHandler(
+    "countPulse",
+    function(pbObj, ped)
+        Citizen.Wait(100)
+        TriggerEvent("startCountPulse", pbObj)
 
-  while isCalling do
-    for _, controlIndex in pairs(DisableKeys) do
-      DisableControlAction(0, controlIndex)
+        while isCalling do
+            for _, controlIndex in pairs(DisableKeys) do
+                DisableControlAction(0, controlIndex)
+            end
+
+            if pbObj then
+                local stringCoords = GetEntityCoords(pbObj)
+                local extraString = ""
+
+                extraString = "Pulse Cost : ~g~$" .. Round(currentCost + 1, 1)
+                DrawText3Ds(
+                    stringCoords.x,
+                    stringCoords.y,
+                    stringCoords.z + 1.5,
+                    "Press ~g~Right Mouse Button~w~ To Cancel"
+                )
+                DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.2, extraString)
+            end
+            if currentCash <= currentCost then
+                TooglePhone()
+                ESX.ShowNotification("Your Phone Cost : ~g~ $" .. currentCost + 1 .. "~s~")
+                isCalling = false
+            end
+
+            if IsControlJustReleased(0, 25) then
+                isCalling = false
+                ESX.ShowNotification("Your Phone Cost : ~g~ $" .. currentCost + 1 .. "~s~")
+
+                TooglePhone()
+            end
+            Citizen.Wait(0)
+        end
+        ClearPedTasks(ped)
     end
-
-    if pbObj then
-      local stringCoords = GetEntityCoords(pbObj)
-      local extraString = ""
-
-      extraString = "Pulse Cost : ~g~$" .. Round(currentCost+1, 1)
-      DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.5, "Press ~g~Right Mouse Button~w~ To Cancel")
-      DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.2, extraString)
-      
-    end
-    if currentCash <= currentCost then
-      TooglePhone() 
-      ESX.ShowNotification("Your Phone Cost : ~g~ $".. currentCost+1 .. "~s~")
-      isCalling = false
-
-    end
-
-    if IsControlJustReleased(0, 25) then
-      isCalling = false
-      ESX.ShowNotification("Your Phone Cost : ~g~ $".. currentCost+1 .. "~s~")
-
-      TooglePhone()
-    end
-    Citizen.Wait(0)
-  end
-  ClearPedTasks(ped)
-end)
+)
 
 -- mulai itung pulsa + potong duit dari inventori
-AddEventHandler('startCountPulse', function(pbObj)
+AddEventHandler(
+    "startCountPulse",
+    function(pbObj)
+        while isCalling do
+            Citizen.Wait(1000)
 
-  while isCalling do
-    Citizen.Wait(1000)
+            local extraCost = 1
+            currentCost = currentCost + extraCost
+        end
 
-    local extraCost = 1
-    currentCost = currentCost + extraCost
-  end
+        print(pbObj)
 
-  print(pbObj)
+        if pbObj then
+            TriggerServerEvent("payPulse", currentCost)
+        end
 
-  if pbObj then
-    TriggerServerEvent('payPulse', currentCost)
-  end
+        currentCost = 0.0
+    end
+)
 
-  currentCost = 0.0
-end)
 
 
 --==================================================================================== script ini customize dari script legacyFuel, untuk script bagian server, cek trigger "payPulse" di server.lua ====================================================================
