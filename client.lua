@@ -1,27 +1,3 @@
-
-local currentCost = 0.0
-local currentCash = 1000
-local isNearPB = false
-local isCalling = false
-
-local phones = {
-  [1158960338] = true,
-  [1511539537] = true,
-  [1281992692] = true,
-  [-429560270] = true,
-  [-1559354806] = true,
-  [-78626473] = true,
-  [295857659] = true,
-  [-2103798695] = true,
-  [-870868698] = true,
-  [-1364697528] = true,
-  [-1126237515] = true,
-  [506770882] = true
-}
-
-local DisableKeys = {0, 22, 23, 24, 29, 30, 31, 37, 44, 56, 82, 140, 166, 167, 168, 170, 288, 289, 311, 323}
-
-
 -- ======================================================= PHONE BOOTH / WARTEL SCRIPT -by: zulvio ======================================================================
 -- 3D text
 function DrawText3Ds(x,y,z, text)
@@ -109,17 +85,15 @@ Citizen.CreateThread(function()
         DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.2, "Exit Vehicle To Use Phone Booth")
       else
         DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.5,"Press ~g~ E ~w~ To Use Phone Booth")
-
         if IsControlJustReleased(0, 38) then
-
             if currentCash > 0 then
-
                 hasPhone(function (hasPhone)
                   if hasPhone == false then
                     openPhoneBoothMenu()
                   else
                     print('ada hape')
-                    ESX.ShowNotification("You have a ~r~Handphone~s~, Use your fuckin phone")
+                    ESX.ShowNotification("You already have a ~r~Handphone~s~, Use your fuckin phone")
+                    print(GetEntityHealth(isNearPB))
                   end
                 end)
             else
@@ -152,14 +126,14 @@ function openPhoneBoothMenu()
                 {label = "Send SMS Number", value = "othersms"},
             }
         },
-        function(data2, menu2)
-            local option = data2.current.value
+        function(data, menu)
+            local option = data.current.value
             local playerPed = PlayerPedId()
             local coords = GetEntityCoords(playerPed)
             local caller = GetPlayerName(source)
 
             if option == "911" then
-                ESX.UI.Menu.CloseAll()
+                menu.close()
 
                 TriggerEvent("gcphone:autoCall", option, {useNumber = "Phone Booth"})
                 isCalling = true
@@ -168,7 +142,8 @@ function openPhoneBoothMenu()
 
             elseif option == "311" then
 
-                ESX.UI.Menu.CloseAll()
+                menu.close()
+
                 TriggerEvent("gcphone:autoCall", option, {useNumber = "Phone Booth"})
                 isCalling = true
                 TriggerEvent('countPulse',isNearPB,playerPed)
@@ -176,7 +151,7 @@ function openPhoneBoothMenu()
 
             elseif option == "mechanic" then
 
-                ESX.UI.Menu.CloseAll()
+                menu.close()
                 DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
                 while (UpdateOnscreenKeyboard() == 0) do
                     DisableAllControlActions(0)
@@ -194,7 +169,8 @@ function openPhoneBoothMenu()
             elseif option == "othercall" then
 
                 local number = ""
-                ESX.UI.Menu.CloseAll()
+                menu.close()
+
                 DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 10)
                 while (UpdateOnscreenKeyboard() == 0) do
                     DisableAllControlActions(0)
@@ -214,8 +190,7 @@ function openPhoneBoothMenu()
             elseif option == "othersms" then
 
                 local number = ""
-
-                ESX.UI.Menu.CloseAll()
+                menu.close()
 
                 DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 10)
                 while (UpdateOnscreenKeyboard() == 0) do
