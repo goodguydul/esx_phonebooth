@@ -85,17 +85,23 @@ Citizen.CreateThread(function()
         DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.2, "Exit Vehicle To Use Phone Booth")
       else
         DrawText3Ds(pbCoords.x, pbCoords.y, pbCoords.z + 1.5,"Press ~g~ E ~w~ To Use Phone Booth")
+
         if IsControlJustReleased(0, 38) then
             if currentCash > 0 then
+
                 hasPhone(function (hasPhone)
                   if hasPhone == false then
                     openPhoneBoothMenu()
+
                   else
-                    ESX.ShowNotification("You already have a ~r~Handphone~s~, Use your fuckin phone")
+                    print('ada hape')
+                    ESX.ShowNotification("You have a ~r~Handphone~s~, Use your fuckin phone")
+                    print(GetEntityHealth(isNearPB))
+
                   end
                 end)
             else
-              DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.5, "Not Enough Cash")
+              ESX.ShowNotification("Not Enough Money")            
             end
           -- end
         end
@@ -114,7 +120,7 @@ function openPhoneBoothMenu()
         GetCurrentResourceName(),
         "phone_booth_menu",
         {
-            title = "Select to Call",
+            title = "Select to Call (SMS: $100 | Call: $1/second",
             align = "top-left",
             elements = {
                 {label = "Police", value = "911"},
@@ -150,20 +156,23 @@ function openPhoneBoothMenu()
             elseif option == "mechanic" then
 
                 menu.close()
-                DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
-                while (UpdateOnscreenKeyboard() == 0) do
-                    DisableAllControlActions(0)
-                    Wait(0)
-                end
-                if (GetOnscreenKeyboardResult()) then
-                    message = GetOnscreenKeyboardResult()
-                    message =
-                        "[MESSAGE FROM PHONEBOOTH] : " .. message .. " - Location : " .. coords.x .. ", " .. coords.y
-                    sendMessage(option, message)
-                    ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
-                    TriggerServerEvent('payPulse', 100)
-                end
-
+                if currentCash > 100 then
+                  DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
+                  while (UpdateOnscreenKeyboard() == 0) do
+                      DisableAllControlActions(0)
+                      Wait(0)
+                  end
+                  if (GetOnscreenKeyboardResult()) then
+                      message = GetOnscreenKeyboardResult()
+                      message =
+                          "[MESSAGE FROM PHONEBOOTH] : " .. message .. " - Location : " .. coords.x .. ", " .. coords.y
+                      sendMessage(option, message)
+                      ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
+                      TriggerServerEvent('payPulse', 100)
+                  end
+                else
+                  ESX.ShowNotification("Not Enough Money to send message!")   
+                end               
             elseif option == "othercall" then
 
                 local number = ""
@@ -189,32 +198,34 @@ function openPhoneBoothMenu()
 
                 local number = ""
                 menu.close()
-
-                DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 10)
-                while (UpdateOnscreenKeyboard() == 0) do
-                    DisableAllControlActions(0)
-                    Wait(0)
-                end
-                if (GetOnscreenKeyboardResult()) then
-                    number = GetOnscreenKeyboardResult()
-                end
-
-                if number ~= "" then
-                  DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
+                if currentCash > 100 then
+                  DisplayOnscreenKeyboard(1, "FMMC_MPM_NA", "", "", "", "", "", 10)
                   while (UpdateOnscreenKeyboard() == 0) do
                       DisableAllControlActions(0)
                       Wait(0)
                   end
                   if (GetOnscreenKeyboardResult()) then
-                      message = GetOnscreenKeyboardResult()
-                      message =
-                          "[MESSAGE FROM PHONEBOOTH] : " .. message .. " - Location : " .. coords.x .. ", " .. coords.y
-                      sendMessage(number, message)
-                      ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
-                      TriggerServerEvent('payPulse', 100)
+                      number = GetOnscreenKeyboardResult()
                   end
-                end
 
+                  if number ~= "" then
+                    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 64)
+                    while (UpdateOnscreenKeyboard() == 0) do
+                        DisableAllControlActions(0)
+                        Wait(0)
+                    end
+                    if (GetOnscreenKeyboardResult()) then
+                        message = GetOnscreenKeyboardResult()
+                        message =
+                            "[MESSAGE FROM PHONEBOOTH] : " .. message .. " - Location : " .. coords.x .. ", " .. coords.y
+                        sendMessage(number, message)
+                        ESX.ShowNotification("Your Phone Cost : ~g~ $100 ~s~")
+                        TriggerServerEvent('payPulse', 100)
+                    end
+                  end
+                else
+                  ESX.ShowNotification("Not Enough Money to send message!")
+                end
             end
         end)
 end
@@ -233,21 +244,21 @@ AddEventHandler('countPulse', function(pbObj, ped)
       local stringCoords = GetEntityCoords(pbObj)
       local extraString = ""
 
-      extraString = "Pulse Cost : ~g~$" .. Round(currentCost, 1)
+      extraString = "Pulse Cost : ~g~$" .. Round(currentCost+1, 1)
       DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.5, "Press ~g~Right Mouse Button~w~ To Cancel")
       DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.2, extraString)
       
     end
     if currentCash <= currentCost then
-
-      DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.2, "Not Enough Cash")
-
+      TooglePhone() 
+      ESX.ShowNotification("Your Phone Cost : ~g~ $".. currentCost+1 .. "~s~")
       isCalling = false
+
     end
 
     if IsControlJustReleased(0, 25) then
       isCalling = false
-      ESX.ShowNotification("Your Phone Cost : ~g~ $".. currentCost .. "~s~")
+      ESX.ShowNotification("Your Phone Cost : ~g~ $".. currentCost+1 .. "~s~")
 
       TooglePhone()
     end
@@ -266,6 +277,8 @@ AddEventHandler('startCountPulse', function(pbObj)
     currentCost = currentCost + extraCost
   end
 
+  print(pbObj)
+
   if pbObj then
     TriggerServerEvent('payPulse', currentCost)
   end
@@ -275,3 +288,4 @@ end)
 
 
 --==================================================================================== script ini customize dari script legacyFuel, untuk script bagian server, cek trigger "payPulse" di server.lua ====================================================================
+
