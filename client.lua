@@ -1,3 +1,27 @@
+local currentCost = 0.0
+local currentCash = 1000
+local isNearPB = false
+local isCalling = false
+
+local phones = {
+  [1158960338] = true,
+  [1511539537] = true,
+  [1281992692] = true,
+  [-429560270] = true,
+  [-1559354806] = true,
+  [-78626473] = true,
+  [295857659] = true,
+  [-2103798695] = true,
+  [-870868698] = true,
+  [-1364697528] = true,
+  [-1126237515] = true,
+  [506770882] = true
+}
+
+local DisableKeys = {0, 22, 23, 24, 29, 30, 31, 37, 44, 56, 82, 140, 166, 167, 168, 170, 288, 289, 311, 323}
+
+
+
 -- ======================================================= PHONE BOOTH / WARTEL SCRIPT -by: zulvio ======================================================================
 -- 3D text
 function DrawText3Ds(x,y,z, text)
